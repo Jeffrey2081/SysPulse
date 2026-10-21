@@ -33,7 +33,7 @@
 SysPulse includes a universal setup script that automatically detects your Linux distribution, prepares an isolated Python environment, enables a persistent `systemd` user service, and displays your pairing QR code:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/SysPulse.git
+git clone https://github.com/Jeffrey2081/SysPulse.git
 cd SysPulse
 ./scripts/install.sh
 ```
