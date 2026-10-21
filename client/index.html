@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>SysPulse Monitor</title>
+  
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#090d16">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon.svg">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Top App Bar -->
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="logo-pulse">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+      </div>
+      <div>
+        <h1 class="header-title">SysPulse</h1>
+        <div class="header-status">
+          <span class="status-dot disconnected" id="statusDot"></span>
+          <span class="status-text" id="statusText">Connecting...</span>
+          <span class="latency-badge" id="latencyBadge">-- ms</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="header-actions">
+      <button class="icon-btn" id="openPairModalBtn" title="Pair Device">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main View Container -->
+  <main class="main-content">
+    
+    <!-- ================= TAB 1: DASHBOARD ================= -->
+    <section class="tab-pane active" id="tab-dashboard">
+      <!-- Host Information Card -->
+      <div class="card host-card">
+        <div class="host-info-row">
+          <div>
+            <span class="host-badge" id="hostOsBadge">Linux</span>
+            <h2 class="host-name" id="hostName">Searching PC...</h2>
+            <p class="host-detail" id="hostKernel">Scanning local Wi-Fi...</p>
+          </div>
+          <div class="uptime-badge">
+            <span class="uptime-label">UPTIME</span>
+            <span class="uptime-val" id="hostUptime">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Radial Gauges -->
+      <div class="gauges-grid">
+        <!-- CPU Gauge -->
+        <div class="gauge-card">
+          <div class="gauge-ring-container">
+            <svg class="gauge-svg" viewBox="0 0 100 100">
+              <circle class="gauge-bg" cx="50" cy="50" r="42" />
+              <circle class="gauge-fill cpu-fill" id="cpuGaugeFill" cx="50" cy="50" r="42" />
+            </svg>
+            <div class="gauge-center-text">
+              <span class="gauge-value" id="cpuGaugeVal">0</span>
+              <span class="gauge-unit">%</span>
+            </div>
+          </div>
+          <div class="gauge-title">CPU</div>
+          <div class="gauge-subtitle" id="cpuTempSubtitle">-- °C</div>
+        </div>
+
+        <!-- RAM Gauge -->
+        <div class="gauge-card">
+          <div class="gauge-ring-container">
+            <svg class="gauge-svg" viewBox="0 0 100 100">
+              <circle class="gauge-bg" cx="50" cy="50" r="42" />
+              <circle class="gauge-fill ram-fill" id="ramGaugeFill" cx="50" cy="50" r="42" />
+            </svg>
+            <div class="gauge-center-text">
+              <span class="gauge-value" id="ramGaugeVal">0</span>
+              <span class="gauge-unit">%</span>
+            </div>
+          </div>
+          <div class="gauge-title">RAM</div>
+          <div class="gauge-subtitle" id="ramUsedSubtitle">-- / -- GB</div>
+        </div>
+
+        <!-- DISK Gauge -->
+        <div class="gauge-card">
+          <div class="gauge-ring-container">
+            <svg class="gauge-svg" viewBox="0 0 100 100">
+              <circle class="gauge-bg" cx="50" cy="50" r="42" />
+              <circle class="gauge-fill disk-fill" id="diskGaugeFill" cx="50" cy="50" r="42" />
+            </svg>
+            <div class="gauge-center-text">
+              <span class="gauge-value" id="diskGaugeVal">0</span>
+              <span class="gauge-unit">%</span>
+            </div>
+          </div>
+          <div class="gauge-title">STORAGE</div>
+          <div class="gauge-subtitle" id="diskFreeSubtitle">-- Free</div>
+        </div>
+      </div>
+
+      <!-- Storage Banner Card -->
+      <div class="card storage-summary-card">
+        <div class="card-header-flex">
+          <span class="card-title">Storage Allocation</span>
+          <span class="storage-free-badge" id="storageSummaryFree">-- Free</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill disk-gradient" id="storageSummaryBar" style="width: 0%"></div>
+        </div>
+        <div class="storage-metrics-split">
+          <div>
+            <span class="sub-label">Used Storage</span>
+            <h4 class="metric-val" id="storageSummaryUsed">-- GB</h4>
+          </div>
+          <div>
+            <span class="sub-label">Free Storage</span>
+            <h4 class="metric-val text-green" id="storageSummaryFreeVal">-- GB</h4>
+          </div>
+          <div>
+            <span class="sub-label">Total Storage</span>
+            <h4 class="metric-val" id="storageSummaryTotal">-- GB</h4>
+          </div>
+        </div>
+      </div>
+
+      <!-- Updates Action Banner -->
+      <div class="card updates-banner-card" id="updatesBanner" onclick="switchTab('tab-updates')">
+        <div class="banner-left">
+          <div class="banner-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+            </svg>
+          </div>
+          <div>
+            <h4 class="banner-title" id="dashUpdateTitle">Checking Updates...</h4>
+            <p class="banner-desc" id="dashUpdateDesc">Tap to view pending packages & upgrade</p>
+          </div>
+        </div>
+        <div class="banner-badge" id="dashUpdateBadge">--</div>
+      </div>
+
+      <!-- Quick Live Charts -->
+      <div class="card">
+        <div class="card-header-flex">
+          <span class="card-title">Live CPU & RAM Activity</span>
+          <span class="badge-live">LIVE</span>
+        </div>
+        <div class="canvas-wrapper">
+          <canvas id="quickCpuCanvas"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 2: DETAILED GRAPHS ================= -->
+    <section class="tab-pane" id="tab-graphs">
+      <!-- CPU Graph Card -->
+      <div class="card">
+        <div class="card-header-flex">
+          <div>
+            <span class="card-title">CPU Utilization</span>
+            <p class="card-sub" id="graphsCpuModel">Intel Core i5</p>
+          </div>
+          <span class="live-metric-tag text-cyan" id="graphsCpuVal">0%</span>
+        </div>
+        <div class="canvas-wrapper big-graph">
+          <canvas id="detailCpuCanvas"></canvas>
+        </div>
+        <!-- Per Core Micro Bars -->
+        <div class="cores-container" id="coresContainer">
+          <!-- Filled dynamically -->
+        </div>
+      </div>
+
+      <!-- RAM Graph Card -->
+      <div class="card">
+        <div class="card-header-flex">
+          <div>
+            <span class="card-title">RAM Utilization</span>
+            <p class="card-sub" id="graphsRamSub">Used vs Total</p>
+          </div>
+          <span class="live-metric-tag text-purple" id="graphsRamVal">0%</span>
+        </div>
+        <div class="canvas-wrapper big-graph">
+          <canvas id="detailRamCanvas"></canvas>
+        </div>
+      </div>
+
+      <!-- Network Speed Card -->
+      <div class="card">
+        <div class="card-header-flex">
+          <div>
+            <span class="card-title">Network Bandwidth</span>
+            <p class="card-sub">Real-time LAN & Internet Traffic</p>
+          </div>
+          <div class="net-speed-tags">
+            <span class="net-tag dl">↓ <span id="graphsNetDl">0 KB/s</span></span>
+            <span class="net-tag ul">↑ <span id="graphsNetUl">0 KB/s</span></span>
+          </div>
+        </div>
+        <div class="canvas-wrapper big-graph">
+          <canvas id="detailNetCanvas"></canvas>
+        </div>
+      </div>
+
+      <!-- Disk I/O Activity Card -->
+      <div class="card">
+        <div class="card-header-flex">
+          <div>
+            <span class="card-title">Disk I/O Activity</span>
+            <p class="card-sub">Read / Write Speeds</p>
+          </div>
+          <div class="net-speed-tags">
+            <span class="net-tag dl">R: <span id="graphsDiskRead">0 KB/s</span></span>
+            <span class="net-tag ul">W: <span id="graphsDiskWrite">0 KB/s</span></span>
+          </div>
+        </div>
+        <div class="canvas-wrapper">
+          <canvas id="detailDiskCanvas"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 3: STORAGE & DISKS ================= -->
+    <section class="tab-pane" id="tab-storage">
+      <div class="card">
+        <div class="card-header-flex">
+          <span class="card-title">Storage Overview</span>
+          <span class="storage-free-badge" id="storageTabTotalBadge">-- Total</span>
+        </div>
+        
+        <div class="storage-big-stats">
+          <div class="stat-box">
+            <span class="stat-label">Total Storage</span>
+            <span class="stat-num" id="storageTabTotal">-- GB</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Used Storage</span>
+            <span class="stat-num text-cyan" id="storageTabUsed">-- GB</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Free Storage</span>
+            <span class="stat-num text-green" id="storageTabFree">-- GB</span>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="section-heading">Mounted Drives & Partitions</h3>
+      <div class="drives-list" id="drivesList">
+        <!-- Dynamically rendered drive cards -->
+        <div class="empty-state">Loading drive partition information...</div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 4: UPDATES & CONTROL ================= -->
+    <section class="tab-pane" id="tab-updates">
+      <!-- Update Controller Card -->
+      <div class="card update-control-card">
+        <div class="card-header-flex">
+          <div>
+            <span class="card-title">System Update Center</span>
+            <p class="card-sub" id="updatePkgManager">Package Manager: Detecting...</p>
+          </div>
+          <span class="update-count-pill" id="updateCountPill">0 Updates</span>
+        </div>
+
+        <div class="update-action-row">
+          <button class="btn btn-outline" id="checkUpdatesBtn" onclick="checkUpdates(true)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            Refresh
+          </button>
+          
+          <button class="btn btn-primary" id="triggerUpdateBtn" onclick="openUpdateModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Update PC Now
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Terminal Console -->
+      <div class="card terminal-card">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <span class="terminal-title">Update Terminal Output</span>
+          <span class="terminal-status" id="terminalStatus">IDLE</span>
+        </div>
+        <div class="terminal-body" id="terminalBody">
+          <div class="terminal-line text-muted">Ready to receive updates. Tap "Update PC Now" to start.</div>
+        </div>
+      </div>
+
+      <!-- Pending Packages List -->
+      <div class="card">
+        <div class="card-header-flex">
+          <span class="card-title">Pending Packages</span>
+          <input type="text" class="pkg-search" id="pkgSearchInput" placeholder="Filter packages..." oninput="filterPackages()">
+        </div>
+        <div class="packages-list" id="packagesList">
+          <div class="empty-state">No pending updates detected.</div>
+        </div>
+      </div>
+
+      <!-- Remote Power Controls -->
+      <div class="card">
+        <span class="card-title">Remote PC Power</span>
+        <p class="card-sub">Trigger system power states remotely over Wi-Fi</p>
+        
+        <div class="power-buttons-grid">
+          <button class="power-btn lock-btn" onclick="confirmPowerAction('lock')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <span>Lock PC</span>
+          </button>
+          
+          <button class="power-btn reboot-btn" onclick="confirmPowerAction('reboot')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </svg>
+            <span>Reboot</span>
+          </button>
+          
+          <button class="power-btn shutdown-btn" onclick="confirmPowerAction('shutdown')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+              <line x1="12" y1="2" x2="12" y2="12"></line>
+            </svg>
+            <span>Shutdown</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 5: SETTINGS & PAIRING ================= -->
+    <section class="tab-pane" id="tab-settings">
+      <!-- Connection Card -->
+      <div class="card">
+        <span class="card-title">PC Connection & Pairing</span>
+        <div class="settings-form">
+          <div class="form-group">
+            <label class="form-label">PC IP Address & Port</label>
+            <input type="text" class="form-input" id="cfgHostInput" placeholder="192.168.1.21:53317">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Pairing PIN / Token</label>
+            <input type="password" class="form-input" id="cfgTokenInput" placeholder="Enter PIN or Token">
+          </div>
+
+          <div class="action-buttons-flex">
+            <button class="btn btn-primary" onclick="saveConnectionSettings()">
+              Save & Connect
+            </button>
+            <button class="btn btn-outline" onclick="openPairModal()">
+              Scan QR / Switch PC
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Refresh Rate & Appearance -->
+      <div class="card">
+        <span class="card-title">Preferences</span>
+        <div class="settings-row">
+          <div>
+            <div class="setting-title">Update Stream Rate</div>
+            <div class="card-sub">Telemetry polling interval</div>
+          </div>
+          <select class="form-select" id="pollRateSelect" onchange="changePollRate(this.value)">
+            <option value="0.5">0.5s (High Speed)</option>
+            <option value="1.0" selected>1.0s (Recommended)</option>
+            <option value="2.0">2.0s (Battery Saver)</option>
+            <option value="5.0">5.0s (Low Data)</option>
+          </select>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="setting-title">Temperature Unit</div>
+            <div class="card-sub">Celsius or Fahrenheit</div>
+          </div>
+          <select class="form-select" id="tempUnitSelect" onchange="changeTempUnit(this.value)">
+            <option value="c" selected>°C (Celsius)</option>
+            <option value="f">°F (Fahrenheit)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- App Download & Install -->
+      <div class="card">
+        <span class="card-title">Install Mobile App</span>
+        <p class="card-sub">Use SysPulse as a native Android app or install to home screen</p>
+        
+        <div class="install-options-col">
+          <a href="/download/syspulse.apk" class="btn btn-accent" id="downloadApkBtn" download>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download Android APK (.apk)
+          </a>
+          
+          <button class="btn btn-outline" id="installPwaBtn" onclick="installPwa()" style="display: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+              <line x1="12" y1="18" x2="12.01" y2="18"></line>
+            </svg>
+            Add to Home Screen (Instant)
+          </button>
+        </div>
+      </div>
+
+      <!-- Top Processes -->
+      <div class="card">
+        <span class="card-title">Top Active Processes</span>
+        <div class="proc-table-wrapper">
+          <table class="proc-table">
+            <thead>
+              <tr>
+                <th>Process</th>
+                <th>PID</th>
+                <th>CPU %</th>
+                <th>RAM %</th>
+              </tr>
+            </thead>
+            <tbody id="topProcsBody">
+              <tr><td colspan="4" class="text-muted">Loading processes...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= BOTTOM NAVIGATION TABS ================= -->
+  <nav class="bottom-nav">
+    <button class="nav-tab active" data-tab="tab-dashboard" onclick="switchTab('tab-dashboard')">
+      <div class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+      </div>
+      <span class="tab-label">Dashboard</span>
+    </button>
+
+    <button class="nav-tab" data-tab="tab-graphs" onclick="switchTab('tab-graphs')">
+      <div class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+      </div>
+      <span class="tab-label">Graphs</span>
+    </button>
+
+    <button class="nav-tab" data-tab="tab-storage" onclick="switchTab('tab-storage')">
+      <div class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+      </div>
+      <span class="tab-label">Storage</span>
+    </button>
+
+    <button class="nav-tab" data-tab="tab-updates" onclick="switchTab('tab-updates')">
+      <div class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+        </svg>
+        <span class="tab-badge" id="navUpdateBadge" style="display: none;">0</span>
+      </div>
+      <span class="tab-label">Updates</span>
+    </button>
+
+    <button class="nav-tab" data-tab="tab-settings" onclick="switchTab('tab-settings')">
+      <div class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </div>
+      <span class="tab-label">Settings</span>
+    </button>
+  </nav>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- Pairing Modal -->
+  <div class="modal-backdrop" id="pairModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Pair PC with SysPulse</h3>
+        <button class="icon-btn" onclick="closeModal('pairModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">Enter the 6-digit PIN shown on your PC screen or scan the terminal QR code.</p>
+        
+        <div class="form-group">
+          <label class="form-label">PC Hostname or IP</label>
+          <input type="text" class="form-input" id="modalHostInput" placeholder="192.168.1.21:8888">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">6-Digit Pairing PIN</label>
+          <input type="text" class="form-input pin-input" id="modalPinInput" maxlength="6" placeholder="000000">
+        </div>
+
+        <button class="btn btn-primary btn-block" onclick="submitPairingPin()">
+          Pair Now
+        </button>
+
+        <div class="modal-divider"><span>OR</span></div>
+
+        <button class="btn btn-outline btn-block" onclick="startCameraQrScanner()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+          Scan PC QR Code with Camera
+        </button>
+
+        <div id="cameraScannerContainer" style="display: none; margin-top: 15px;">
+          <video id="qrVideo" style="width: 100%; border-radius: 12px; background: #000;"></video>
+          <button class="btn btn-outline btn-block" style="margin-top: 8px;" onclick="stopCameraQrScanner()">Stop Camera</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sudo Password / Update Confirmation Modal -->
+  <div class="modal-backdrop" id="updateModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Confirm PC Upgrade</h3>
+        <button class="icon-btn" onclick="closeModal('updateModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">This will download and install all pending packages on your PC.</p>
+        
+        <div class="form-group" id="sudoPasswordGroup">
+          <label class="form-label">PC Root / Sudo Password (if required)</label>
+          <input type="password" class="form-input" id="sudoPasswordInput" placeholder="Leave blank if passwordless sudo">
+          <span class="input-hint">If your PC requires a password for sudo, enter it here.</span>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="closeModal('updateModal')">Cancel</button>
+          <button class="btn btn-primary" onclick="executeSystemUpdate()">Start Upgrade</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Power Action Confirmation Modal -->
+  <div class="modal-backdrop" id="powerModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="powerModalTitle">Confirm Action</h3>
+        <button class="icon-btn" onclick="closeModal('powerModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc" id="powerModalDesc">Are you sure you want to perform this power action?</p>
+        
+        <div class="modal-actions">
+          <button class="btn btn-outline" onclick="closeModal('powerModal')">Cancel</button>
+          <button class="btn btn-danger" id="powerModalConfirmBtn" onclick="executePowerAction()">Proceed</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

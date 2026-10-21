@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Android & Build Artifacts
+android/build_tmp/
+android/debug.keystore
+.temp/
+
+# Logs & OS files
+*.log
+.DS_Store
+*.idsig
